@@ -1,0 +1,48 @@
+# SRGAN Configuration File
+# This file contains hyperparameters and configuration settings for the SRGAN model
+
+# Training parameters
+batch_size: 16
+num_epochs: 100
+learning_rate: 1e-4
+
+discriminator_lr: 1e-4
+
+generator_lr: 1e-4
+
+# Model parameters
+upscale_factor: 4
+num_residual_blocks: 16
+
+# Data parameters
+train_image_dir: 'data/train'
+test_image_dir: 'data/test'
+
+# Logging and saving
+save_interval: 10
+log_interval: 10
+
+devices:
+  - cpu
+  - cuda:0
+
+# Loss function weights
+content_loss_weight: 1.0
+adversarial_loss_weight: 0.001
+
+# Evaluation metrics
+metrics: ['PSNR', 'SSIM', 'MOS']
+
+# Dataset parameters
+image_size: 96
+patch_size: 96
+
+data_augmentation:
+  random_crop: true
+  random_flip: true
+  random_rotate: true
+
+# Checkpoint settings
+checkpoint_dir: 'checkpoints'
+results_dir: 'results'
+logs_dir: 'logs'
