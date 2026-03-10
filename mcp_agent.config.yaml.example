@@ -1,6 +1,6 @@
 $schema: ./schema/mcp-agent.config.schema.json
 anthropic: null
-default_search_server: filesystem
+default_search_server: brave
 document_segmentation:
   enabled: false
   size_threshold_chars: 50000
@@ -105,17 +105,17 @@ mcp:
 # LLM Provider Priority (选择使用哪个LLM / Choose which LLM to use)
 # Options: "anthropic", "google", "openai"
 # If not set or provider unavailable, will fallback to first available provider
-llm_provider: "openai"  # 设置为 "google", "anthropic", 或 "openai"
+llm_provider: "openai"  # 设置�?"google", "anthropic", �?"openai"
 
 #openrouter can be used here and openai professional key
 openai:
-  base_max_tokens: 40000
-  default_model: "google/gemini-3-flash-preview"
-  planning_model: "google/gemini-3-flash-preview"
-  implementation_model: "google/gemini-3-flash-preview"
-  reasoning_effort: low  # Only for thinking models
+  base_max_tokens: 12000
+  default_model: "qwen-coder-plus-1106"
+  planning_model: "qwen-coder-plus-1106"
+  implementation_model: "qwen-coder-plus-1106"
+  reasoning_effort: low  # qwen-turbo is not a heavy reasoning model
   max_tokens_policy: adaptive
-  retry_max_tokens: 32768
+  retry_max_tokens: 16000
 
 # Provider configurations
 # default_model is used by mcp_agent for planning/analysis phases

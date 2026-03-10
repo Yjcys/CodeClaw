@@ -1971,7 +1971,7 @@ async def execute_multi_agent_research_pipeline(
         
         # Display error in UI if progress callback available
         if progress_callback:
-            progress_callback(0, "Pipeline failed", error_msg)
+            progress_callback(0, f"Pipeline failed: {error_msg}")
         
         # Ensure all resources are cleaned up on error
         import gc

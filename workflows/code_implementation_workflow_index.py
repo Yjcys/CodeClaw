@@ -33,7 +33,58 @@ from workflows.agents import CodeImplementationAgent
 from workflows.agents.memory_agent_concise import ConciseMemoryAgent
 from config.mcp_tool_definitions_index import get_mcp_tools
 from utils.llm_utils import get_preferred_llm_class, get_default_models, load_api_config
+from utils.loop_detector import LoopDetector, ProgressTracker
 # DialogueLogger removed - no longer needed
+
+
+def _extract_mcp_text(result: Any) -> str:
+    """Extract readable text from MCP tool results across multiple return types."""
+    if result is None:
+        return ""
+    if isinstance(result, str):
+        return result
+    if isinstance(result, dict):
+        return json.dumps(result, ensure_ascii=False)
+
+    content = getattr(result, "content", None)
+    if isinstance(content, list):
+        parts: List[str] = []
+        for item in content:
+            if isinstance(item, str):
+                parts.append(item)
+                continue
+            if isinstance(item, dict) and "text" in item:
+                parts.append(str(item["text"]))
+                continue
+            text = getattr(item, "text", None)
+            if text is not None:
+                parts.append(str(text))
+        if parts:
+            return "\n".join(parts)
+
+    return str(result)
+
+
+def _parse_mcp_json_object(result: Any) -> Dict[str, Any]:
+    """Parse MCP result into a JSON object safely."""
+    raw = _extract_mcp_text(result).strip()
+    if not raw:
+        return {}
+
+    try:
+        parsed = json.loads(raw)
+        return parsed if isinstance(parsed, dict) else {}
+    except Exception:
+        # Some MCP payloads may include wrappers before/after JSON.
+        start = raw.find("{")
+        end = raw.rfind("}")
+        if start != -1 and end != -1 and end > start:
+            try:
+                parsed = json.loads(raw[start : end + 1])
+                return parsed if isinstance(parsed, dict) else {}
+            except Exception:
+                return {}
+        return {}
 
 
 class CodeImplementationWorkflowWithIndex:
@@ -1386,18 +1437,21 @@ Requirements:
                 history_result = await self.mcp_agent.call_tool(
                     "get_operation_history", {"last_n": 30}
                 )
-                history_data = (
-                    json.loads(history_result)
-                    if isinstance(history_result, str)
-                    else history_result
-                )
+                history_data = _parse_mcp_json_object(history_result)
             else:
                 history_data = {"total_operations": 0, "history": []}
+
+            if not isinstance(history_data, dict):
+                history_data = {"total_operations": 0, "history": []}
+            if not isinstance(history_data.get("history"), list):
+                history_data["history"] = []
 
             write_operations = 0
             files_created = []
             if "history" in history_data:
                 for item in history_data["history"]:
+                    if not isinstance(item, dict):
+                        continue
                     if item.get("action") == "write_file":
                         write_operations += 1
                         file_path = item.get("details", {}).get("file_path", "unknown")
